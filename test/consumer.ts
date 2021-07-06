@@ -10,15 +10,11 @@ const AUTHENTICATION_ERROR_TIMEOUT = 20;
 const POLLING_TIMEOUT = 100;
 
 function stubResolve(value?: any): any {
-  return sandbox
-    .stub()
-    .returns({ promise: sandbox.stub().resolves(value) });
+  return sandbox.stub().returns({ promise: sandbox.stub().resolves(value) });
 }
 
 function stubReject(value?: any): any {
-  return sandbox
-    .stub()
-    .returns({ promise: sandbox.stub().rejects(value) });
+  return sandbox.stub().returns({ promise: sandbox.stub().rejects(value) });
 }
 
 class MockSQSError extends Error {
@@ -43,11 +39,13 @@ describe('Consumer', () => {
   let handleMessageBatch;
   let sqs;
   const response = {
-    Messages: [{
-      ReceiptHandle: 'receipt-handle',
-      MessageId: '123',
-      Body: 'body'
-    }]
+    Messages: [
+      {
+        ReceiptHandle: 'receipt-handle',
+        MessageId: '123',
+        Body: 'body'
+      }
+    ]
   };
 
   beforeEach(() => {
@@ -205,11 +203,17 @@ describe('Consumer', () => {
       });
 
       consumer.start();
-      const [err]: any = await Promise.all([pEvent(consumer, 'timeout_error'), clock.tickAsync(handleMessageTimeout)]);
+      const [err]: any = await Promise.all([
+        pEvent(consumer, 'timeout_error'),
+        clock.tickAsync(handleMessageTimeout)
+      ]);
       consumer.stop();
 
       assert.ok(err);
-      assert.equal(err.message, `Message handler timed out after ${handleMessageTimeout}ms: Operation timed out.`);
+      assert.equal(
+        err.message,
+        `Message handler timed out after ${handleMessageTimeout}ms: Operation timed out.`
+      );
     });
 
     it('handles unexpected exceptions thrown by the handler function', async () => {
@@ -310,7 +314,8 @@ describe('Consumer', () => {
     it('waits before repolling when a UnknownEndpoint error occurs', async () => {
       const unknownEndpointErr = {
         code: 'UnknownEndpoint',
-        message: 'Inaccessible host: `sqs.eu-west-1.amazonaws.com`. This service may not be available in the `eu-west-1` region.'
+        message:
+          'Inaccessible host: `sqs.eu-west-1.amazonaws.com`. This service may not be available in the `eu-west-1` region.'
       };
       sqs.receiveMessage = stubReject(unknownEndpointErr);
       const errorListener = sandbox.stub();
@@ -380,7 +385,7 @@ describe('Consumer', () => {
       });
     });
 
-    it('doesn\'t delete the message when a processing error is reported', async () => {
+    it("doesn't delete the message when a processing error is reported", async () => {
       handleMessage.rejects(new Error('Processing error'));
 
       consumer.start();
@@ -400,7 +405,7 @@ describe('Consumer', () => {
       sandbox.assert.calledTwice(handleMessage);
     });
 
-    it('doesn\'t consume more messages when called multiple times', () => {
+    it("doesn't consume more messages when called multiple times", () => {
       sqs.receiveMessage = stubResolve(new Promise((res) => setTimeout(res, 100)));
       consumer.start();
       consumer.start();
@@ -461,7 +466,7 @@ describe('Consumer', () => {
       });
     });
 
-    it('consumes messages with message attribute \'ApproximateReceiveCount\'', async () => {
+    it("consumes messages with message attribute 'ApproximateReceiveCount'", async () => {
       const messageWithAttr = {
         ReceiptHandle: 'receipt-handle-1',
         MessageId: '1',
@@ -620,7 +625,6 @@ describe('Consumer', () => {
 
       sandbox.assert.callCount(handleMessageBatch, 1);
       sandbox.assert.callCount(handleMessage, 0);
-
     });
 
     it('extends visibility timeout for long running handler functions', async () => {
