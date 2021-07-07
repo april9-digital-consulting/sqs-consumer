@@ -59,7 +59,7 @@ describe('Consumer', () => {
     sqs.changeMessageVisibility = stubResolve();
     sqs.changeMessageVisibilityBatch = stubResolve();
 
-    consumer = new Consumer({
+    consumer = new Consumer('aws', {
       queueUrl: 'some-queue-url',
       region: 'some-region',
       handleMessage,
@@ -74,7 +74,7 @@ describe('Consumer', () => {
 
   it('requires a queueUrl to be set', () => {
     assert.throws(() => {
-      Consumer.create({
+      Consumer.create('aws', {
         region: 'some-region',
         handleMessage
       });
@@ -83,7 +83,7 @@ describe('Consumer', () => {
 
   it('requires a handleMessage or handleMessagesBatch function to be set', () => {
     assert.throws(() => {
-      new Consumer({
+      new Consumer('aws', {
         handleMessage: undefined,
         region: 'some-region',
         queueUrl: 'some-queue-url'
@@ -93,7 +93,7 @@ describe('Consumer', () => {
 
   it('requires the batchSize option to be no greater than 10', () => {
     assert.throws(() => {
-      new Consumer({
+      new Consumer('aws', {
         region: 'some-region',
         queueUrl: 'some-queue-url',
         handleMessage,
@@ -104,7 +104,7 @@ describe('Consumer', () => {
 
   it('requires the batchSize option to be greater than 0', () => {
     assert.throws(() => {
-      new Consumer({
+      new Consumer('aws', {
         region: 'some-region',
         queueUrl: 'some-queue-url',
         handleMessage,
@@ -115,7 +115,7 @@ describe('Consumer', () => {
 
   it('requires visibilityTimeout to be set with heartbeatInterval', () => {
     assert.throws(() => {
-      new Consumer({
+      new Consumer('aws', {
         region: 'some-region',
         queueUrl: 'some-queue-url',
         handleMessage,
@@ -126,7 +126,7 @@ describe('Consumer', () => {
 
   it('requires heartbeatInterval to be less than visibilityTimeout', () => {
     assert.throws(() => {
-      new Consumer({
+      new Consumer('aws', {
         region: 'some-region',
         queueUrl: 'some-queue-url',
         handleMessage,
@@ -138,7 +138,7 @@ describe('Consumer', () => {
 
   describe('.create', () => {
     it('creates a new instance of a Consumer object', () => {
-      const instance = Consumer.create({
+      const instance = Consumer.create('aws', {
         region: 'some-region',
         queueUrl: 'some-queue-url',
         batchSize: 1,
@@ -193,7 +193,7 @@ describe('Consumer', () => {
 
     it('fires a timeout event if handler function takes too long', async () => {
       const handleMessageTimeout = 500;
-      consumer = new Consumer({
+      consumer = new Consumer('aws', {
         queueUrl: 'some-queue-url',
         region: 'some-region',
         handleMessage: () => new Promise((resolve) => setTimeout(resolve, 1000)),
@@ -217,7 +217,7 @@ describe('Consumer', () => {
     });
 
     it('handles unexpected exceptions thrown by the handler function', async () => {
-      consumer = new Consumer({
+      consumer = new Consumer('aws', {
         queueUrl: 'some-queue-url',
         region: 'some-region',
         handleMessage: () => {
@@ -330,7 +330,7 @@ describe('Consumer', () => {
     });
 
     it('waits before repolling when a polling timeout is set', async () => {
-      consumer = new Consumer({
+      consumer = new Consumer('aws', {
         queueUrl: 'some-queue-url',
         region: 'some-region',
         handleMessage,
@@ -438,7 +438,7 @@ describe('Consumer', () => {
         ]
       });
 
-      consumer = new Consumer({
+      consumer = new Consumer('aws', {
         queueUrl: 'some-queue-url',
         messageAttributeNames: ['attribute-1', 'attribute-2'],
         region: 'some-region',
@@ -480,7 +480,7 @@ describe('Consumer', () => {
         Messages: [messageWithAttr]
       });
 
-      consumer = new Consumer({
+      consumer = new Consumer('aws', {
         queueUrl: 'some-queue-url',
         attributeNames: ['ApproximateReceiveCount'],
         region: 'some-region',
@@ -575,7 +575,7 @@ describe('Consumer', () => {
       });
       handleMessage.resolves(null);
 
-      consumer = new Consumer({
+      consumer = new Consumer('aws', {
         queueUrl: 'some-queue-url',
         messageAttributeNames: ['attribute-1', 'attribute-2'],
         region: 'some-region',
@@ -592,7 +592,7 @@ describe('Consumer', () => {
     });
 
     it('calls the handleMessagesBatch function when a batch of messages is received', async () => {
-      consumer = new Consumer({
+      consumer = new Consumer('aws', {
         queueUrl: 'some-queue-url',
         messageAttributeNames: ['attribute-1', 'attribute-2'],
         region: 'some-region',
@@ -609,7 +609,7 @@ describe('Consumer', () => {
     });
 
     it('prefers handleMessagesBatch over handleMessage when both are set', async () => {
-      consumer = new Consumer({
+      consumer = new Consumer('aws', {
         queueUrl: 'some-queue-url',
         messageAttributeNames: ['attribute-1', 'attribute-2'],
         region: 'some-region',
@@ -628,7 +628,7 @@ describe('Consumer', () => {
     });
 
     it('extends visibility timeout for long running handler functions', async () => {
-      consumer = new Consumer({
+      consumer = new Consumer('aws', {
         queueUrl: 'some-queue-url',
         region: 'some-region',
         handleMessage: () => new Promise((resolve) => setTimeout(resolve, 75000)),
@@ -663,7 +663,7 @@ describe('Consumer', () => {
           { MessageId: '3', ReceiptHandle: 'receipt-handle-3', Body: 'body-3' }
         ]
       });
-      consumer = new Consumer({
+      consumer = new Consumer('aws', {
         queueUrl: 'some-queue-url',
         region: 'some-region',
         handleMessageBatch: () => new Promise((resolve) => setTimeout(resolve, 75000)),
