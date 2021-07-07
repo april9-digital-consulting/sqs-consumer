@@ -2,8 +2,7 @@ import { assert } from 'chai';
 import * as pEvent from 'p-event';
 
 import * as sinon from 'sinon';
-import { Consumer } from '../src/index';
-import { AwsQueueProvider } from '../src/providers/awsQueueProvider';
+import { Consumer, AwsQueueProvider } from '../src/index';
 
 const sandbox = sinon.createSandbox();
 
