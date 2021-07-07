@@ -16,10 +16,9 @@ npm install sqs-consumer --save
 ## Usage
 
 ```js
-const { Consumer } = require('sqs-consumer');
-
-const app = Consumer.create({
-  queueUrl: 'https://sqs.eu-west-1.amazonaws.com/account-id/queue-name',
+const { Consumer, AwsQueueProvider } = require('sqs-consumer');
+const provider = new AwsQueueProvider('https://sqs.eu-west-1.amazonaws.com/account-id/queue-name');
+const app = Consumer.create(provider, {
   handleMessage: async (message) => {
     // do some work with `message`
   }
@@ -42,21 +41,21 @@ app.start();
 * By default messages are processed one at a time – a new message won't be received until the first one has been processed. To process messages in parallel, use the `batchSize` option [detailed below](#options).
 * By default, the default Node.js HTTP/HTTPS SQS agent creates a new TCP connection for every new request ([AWS SQS documentation](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/node-reusing-connections.html)). To avoid the cost of establishing a new connection, you can reuse an existing connection by passing a new SQS instance with `keepAlive: true`.
 ```js
-const { Consumer } = require('sqs-consumer');
+const { Consumer, AwsQueueProvider } = require('sqs-consumer');
 const AWS = require('aws-sdk');
-
-const app = Consumer.create({
-  queueUrl: 'https://sqs.eu-west-1.amazonaws.com/account-id/queue-name',
-  handleMessage: async (message) => {
-    // do some work with `message`
-  },
-  sqs: new AWS.SQS({
+const sqs = new AWS.SQS({
     httpOptions: {
       agent: new https.Agent({
         keepAlive: true
       })
     }
-  })
+  });
+
+const provider = new AwsQueueProvider('https://sqs.eu-west-1.amazonaws.com/account-id/queue-name', { sqs });
+const app = Consumer.create(provider, {
+  handleMessage: async (message) => {
+    // do some work with `message`
+  }
 });
 
 app.on('error', (err) => {
@@ -92,12 +91,11 @@ AWS.config.update({
   secretAccessKey: '...'
 });
 
-const app = Consumer.create({
-  queueUrl: 'https://sqs.eu-west-1.amazonaws.com/account-id/queue-name',
+const provider = new AwsQueueProvider('https://sqs.eu-west-1.amazonaws.com/account-id/queue-name', { sqs: new AWS.SQS() });
+const app = Consumer.create(provider, {
   handleMessage: async (message) => {
     // ...
-  },
-  sqs: new AWS.SQS()
+  }
 });
 
 app.on('error', (err) => {

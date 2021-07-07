@@ -10,31 +10,48 @@ import {
 
 const debug = Debug('sqs-consumer/awsQueueProvider');
 
+type AzureQueueOptions = { queueServiceClient?: QueueServiceClient; connectionString?: string };
+
 export class AzureQueueProvider implements IQueueProvider {
   private sqs: QueueClient;
   private queueUrl: string;
 
-  constructor(queueUrl: string, connectionString: string) {
+  constructor(queueUrl: string, options: AzureQueueOptions) {
+    if (!queueUrl) {
+      throw new Error("Argument 'queueUrl' is required");
+    }
+
+    if (!options) {
+      throw new Error("Argument 'options' is required");
+    }
+
+    if (!options.connectionString && !options.queueServiceClient) {
+      throw new Error("'options.connectionString' or 'options.queueServiceClient' is required");
+    }
+
+    const client =
+      options?.queueServiceClient || QueueServiceClient.fromConnectionString(options.connectionString);
+
     this.queueUrl = queueUrl;
-    this.sqs = QueueServiceClient.fromConnectionString(connectionString).getQueueClient(queueUrl);
+    this.sqs = client.getQueueClient(queueUrl);
   }
 
   public async receiveMessage(options?: ReceiveMessageOptions): Promise<ReceiveMessageResult> {
     try {
-      return this.sqs
-        .receiveMessages({
-          QueueUrl: this.queueUrl,
-          MaxNumberOfMessages: options?.maxNumberOfMessages,
-          WaitTimeSeconds: options?.waitTimeout,
-          VisibilityTimeout: options?.visibilityTimeout
-        })
-        .then((item) => ({
-          messages: item.receivedMessageItems.map((item) => ({
-            messageId: item.messageId,
-            body: item.messageText,
-            receiptHandle: item.popReceipt
-          }))
-        }));
+      const response = await this.sqs.receiveMessages({
+        QueueUrl: this.queueUrl,
+        MaxNumberOfMessages: options?.maxNumberOfMessages,
+        WaitTimeSeconds: options?.waitTimeout,
+        VisibilityTimeout: options?.visibilityTimeout
+      });
+
+      return {
+        messages: response.receivedMessageItems.map((item) => ({
+          messageId: item.messageId,
+          body: item.messageText,
+          receiptHandle: item.popReceipt
+        }))
+      };
     } catch (err) {
       throw this.toSQSError(err, `SQS receive message failed: ${err.message}`);
     }

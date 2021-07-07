@@ -34,8 +34,7 @@ describe('Aws', () => {
   let consumer;
   let clock;
   let handleMessage;
-  //   let handleMessageBatch;
-  let awsQueuProvider;
+  let awsQueueProvider;
   const response = {
     Messages: [
       {
@@ -49,7 +48,7 @@ describe('Aws', () => {
   beforeEach(() => {
     clock = sinon.useFakeTimers();
     handleMessage = sandbox.stub().resolves(null);
-    awsQueuProvider = new AwsQueueProvider('some-queue-url', 'region');
+    awsQueueProvider = new AwsQueueProvider('some-queue-url', { region: 'region' });
 
     const sqs = sandbox.mock() as any;
     sqs.receiveMessage = stubResolve(response);
@@ -58,9 +57,9 @@ describe('Aws', () => {
     sqs.changeMessageVisibility = stubResolve();
     sqs.changeMessageVisibilityBatch = stubResolve();
 
-    awsQueuProvider['sqs'] = sqs;
+    awsQueueProvider['sqs'] = sqs;
 
-    consumer = new Consumer(awsQueuProvider, {
+    consumer = new Consumer(awsQueueProvider, {
       handleMessage,
       authenticationErrorTimeout: 20
     });
@@ -72,7 +71,7 @@ describe('Aws', () => {
 
   it('requires a queueUrl to be set', () => {
     assert.throws(() => {
-      new AwsQueueProvider(undefined, 'region');
+      new AwsQueueProvider(undefined);
     });
   });
 
@@ -80,7 +79,7 @@ describe('Aws', () => {
     it('fires an error event when an error occurs receiving a message', async () => {
       const receiveErr = new Error('Receive error');
 
-      awsQueuProvider['sqs'].receiveMessage = stubReject(receiveErr);
+      awsQueueProvider['sqs'].receiveMessage = stubReject(receiveErr);
 
       consumer.start();
 
@@ -100,7 +99,7 @@ describe('Aws', () => {
       receiveErr.hostname = 'hostname';
       receiveErr.region = 'eu-west-1';
 
-      awsQueuProvider['sqs'].receiveMessage = stubReject(receiveErr);
+      awsQueueProvider['sqs'].receiveMessage = stubReject(receiveErr);
 
       consumer.start();
       const err: any = await pEvent(consumer, 'error');
@@ -120,7 +119,7 @@ describe('Aws', () => {
       const deleteErr = new Error('Delete error');
 
       handleMessage.resolves(null);
-      awsQueuProvider['sqs'].deleteMessage = stubReject(deleteErr);
+      awsQueueProvider['sqs'].deleteMessage = stubReject(deleteErr);
 
       consumer.start();
       const err: any = await pEvent(consumer, 'error');
@@ -135,7 +134,7 @@ describe('Aws', () => {
       sqsError.name = 'SQSError';
 
       handleMessage.resolves(sqsError);
-      awsQueuProvider['sqs'].deleteMessage = stubReject(sqsError);
+      awsQueueProvider['sqs'].deleteMessage = stubReject(sqsError);
 
       consumer.start();
       const [err, message] = await pEvent(consumer, 'error', { multiArgs: true });
@@ -150,7 +149,7 @@ describe('Aws', () => {
         code: 'CredentialsError',
         message: 'Missing credentials in config'
       };
-      awsQueuProvider['sqs'].receiveMessage = stubReject(credentialsErr);
+      awsQueueProvider['sqs'].receiveMessage = stubReject(credentialsErr);
       const errorListener = sandbox.stub();
       consumer.on('error', errorListener);
 
@@ -159,7 +158,7 @@ describe('Aws', () => {
       consumer.stop();
 
       sandbox.assert.calledTwice(errorListener);
-      sandbox.assert.calledTwice(awsQueuProvider['sqs'].receiveMessage);
+      sandbox.assert.calledTwice(awsQueueProvider['sqs'].receiveMessage);
     });
 
     it('waits before repolling when a 403 error occurs', async () => {
@@ -167,7 +166,7 @@ describe('Aws', () => {
         statusCode: 403,
         message: 'The security token included in the request is invalid'
       };
-      awsQueuProvider['sqs'].receiveMessage = stubReject(invalidSignatureErr);
+      awsQueueProvider['sqs'].receiveMessage = stubReject(invalidSignatureErr);
       const errorListener = sandbox.stub();
       consumer.on('error', errorListener);
 
@@ -176,7 +175,7 @@ describe('Aws', () => {
       consumer.stop();
 
       sandbox.assert.calledTwice(errorListener);
-      sandbox.assert.calledTwice(awsQueuProvider['sqs'].receiveMessage);
+      sandbox.assert.calledTwice(awsQueueProvider['sqs'].receiveMessage);
     });
 
     it('waits before repolling when a UnknownEndpoint error occurs', async () => {
@@ -185,7 +184,7 @@ describe('Aws', () => {
         message:
           'Inaccessible host: `sqs.eu-west-1.amazonaws.com`. This service may not be available in the `eu-west-1` region.'
       };
-      awsQueuProvider['sqs'].receiveMessage = stubReject(unknownEndpointErr);
+      awsQueueProvider['sqs'].receiveMessage = stubReject(unknownEndpointErr);
       const errorListener = sandbox.stub();
       consumer.on('error', errorListener);
 
@@ -194,7 +193,7 @@ describe('Aws', () => {
       consumer.stop();
 
       sandbox.assert.calledTwice(errorListener);
-      sandbox.assert.calledTwice(awsQueuProvider['sqs'].receiveMessage);
+      sandbox.assert.calledTwice(awsQueueProvider['sqs'].receiveMessage);
     });
   });
 });

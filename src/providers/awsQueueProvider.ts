@@ -11,19 +11,23 @@ import {
 
 const debug = Debug('sqs-consumer/awsQueueProvider');
 
+type AwsQueueOptions = { sqs?: SQS; region?: string };
+
 export class AwsQueueProvider implements IQueueProvider {
   private sqs: SQS;
   private queueUrl: string;
 
-  constructor(queueUrl: string, region: string) {
+  constructor(queueUrl: string, options?: AwsQueueOptions) {
     if (!queueUrl) {
       throw new Error("Argument 'queueUrl` is required");
     }
 
     this.queueUrl = queueUrl;
-    this.sqs = new SQS({
-      region: region || process.env.AWS_REGION || 'eu-west-1'
-    });
+    this.sqs =
+      options.sqs ||
+      new SQS({
+        region: options?.region || process.env.AWS_REGION || 'eu-west-1'
+      });
   }
 
   public async receiveMessage(options?: ReceiveMessageOptions): Promise<ReceiveMessageResult> {
