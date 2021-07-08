@@ -27,6 +27,7 @@
   "homepage": "https://github.com/BBC/sqs-consumer",
   "keywords": [
     "sqs",
+    "storageQueue",
     "queue",
     "consumer"
   ],
