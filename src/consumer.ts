@@ -67,8 +67,6 @@ function hasMessages(response: ReceiveMessageResult): boolean {
 }
 
 export interface ConsumerOptions {
-  attributeNames?: string[];
-  messageAttributeNames?: string[];
   stopped?: boolean;
   batchSize?: number;
   visibilityTimeout?: number;
@@ -81,6 +79,7 @@ export interface ConsumerOptions {
   handleMessageTimeout?: number;
   handleMessage?(message: Message): Promise<void>;
   handleMessageBatch?(messages: Message[]): Promise<void>;
+  receiveOptions?: Record<string, unknown>;
 }
 
 interface Events {
@@ -100,6 +99,7 @@ export class Consumer extends EventEmitter {
   private handleMessageTimeout: number;
   // private attributeNames: string[];
   // private messageAttributeNames: string[];
+  private extraReceiveOptions: Record<string, unknown>;
   private stopped: boolean;
   private batchSize: number;
   private visibilityTimeout: number;
@@ -117,6 +117,7 @@ export class Consumer extends EventEmitter {
     this.handleMessage = options.handleMessage;
     this.handleMessageBatch = options.handleMessageBatch;
     this.handleMessageTimeout = options.handleMessageTimeout;
+    this.extraReceiveOptions = options.receiveOptions;
     // this.attributeNames = options.attributeNames || [];
     // this.messageAttributeNames = options.messageAttributeNames || [];
     this.stopped = true;
@@ -255,12 +256,10 @@ export class Consumer extends EventEmitter {
 
     debug('Polling for messages');
     const receiveOptions: ReceiveMessageOptions = {
-      // Azure has this options?
-      // AttributeNames: this.attributeNames,
-      // MessageAttributeNames: this.messageAttributeNames,
       maxNumberOfMessages: this.batchSize,
       waitTimeout: this.waitTimeSeconds,
-      visibilityTimeout: this.visibilityTimeout
+      visibilityTimeout: this.visibilityTimeout,
+      extraOptions: this.extraReceiveOptions
     };
 
     let currentPollingTimeout = this.pollingWaitTimeMs;

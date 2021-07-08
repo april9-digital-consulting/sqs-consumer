@@ -6,7 +6,8 @@ import {
   IQueueProvider,
   ReceiveMessageOptions,
   ReceiveMessageResult,
-  MessageIdentification
+  MessageIdentification,
+  defaultMessageFields
 } from './contracts';
 
 const debug = Debug('sqs-consumer/awsQueueProvider');
@@ -37,7 +38,8 @@ export class AwsQueueProvider implements IQueueProvider {
           QueueUrl: this.queueUrl,
           MaxNumberOfMessages: options?.maxNumberOfMessages,
           WaitTimeSeconds: options?.waitTimeout,
-          VisibilityTimeout: options?.visibilityTimeout
+          VisibilityTimeout: options?.visibilityTimeout,
+          ...options?.extraOptions
         })
         .promise();
 
@@ -45,7 +47,10 @@ export class AwsQueueProvider implements IQueueProvider {
         messages: response.Messages.map((item) => ({
           messageId: item.MessageId,
           body: item.Body,
-          receiptHandle: item.ReceiptHandle
+          receiptHandle: item.ReceiptHandle,
+          extraFields: Object.keys(item)
+            .filter((key) => !defaultMessageFields.includes(key))
+            .reduce((current, key) => ({ ...current, [key]: item[key] }), {})
         }))
       };
     } catch (err) {

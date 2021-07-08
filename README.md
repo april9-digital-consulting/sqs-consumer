@@ -1,8 +1,8 @@
 # sqs-consumer
 
 [![NPM downloads](https://img.shields.io/npm/dm/sqs-consumer.svg?style=flat)](https://npmjs.org/package/sqs-consumer)
-[![Build Status](https://travis-ci.org/bbc/sqs-consumer.svg)](https://travis-ci.org/bbc/sqs-consumer) 
-[![Code Climate](https://codeclimate.com/github/BBC/sqs-consumer/badges/gpa.svg)](https://codeclimate.com/github/BBC/sqs-consumer) 
+[![Build Status](https://travis-ci.org/bbc/sqs-consumer.svg)](https://travis-ci.org/bbc/sqs-consumer)
+[![Code Climate](https://codeclimate.com/github/BBC/sqs-consumer/badges/gpa.svg)](https://codeclimate.com/github/BBC/sqs-consumer)
 [![Test Coverage](https://codeclimate.com/github/BBC/sqs-consumer/badges/coverage.svg)](https://codeclimate.com/github/BBC/sqs-consumer)
 
 Build SQS-based applications without the boilerplate. Just define an async function that handles the SQS message processing.
@@ -35,21 +35,22 @@ app.on('processing_error', (err) => {
 app.start();
 ```
 
-* The queue is polled continuously for messages using [long polling](http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-long-polling.html).
-* Messages are deleted from the queue once the handler function has completed successfully.
-* Throwing an error (or returning a rejected promise) from the handler function will cause the message to be left on the queue. An [SQS redrive policy](http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/SQSDeadLetterQueue.html) can be used to move messages that cannot be processed to a dead letter queue.
-* By default messages are processed one at a time – a new message won't be received until the first one has been processed. To process messages in parallel, use the `batchSize` option [detailed below](#options).
-* By default, the default Node.js HTTP/HTTPS SQS agent creates a new TCP connection for every new request ([AWS SQS documentation](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/node-reusing-connections.html)). To avoid the cost of establishing a new connection, you can reuse an existing connection by passing a new SQS instance with `keepAlive: true`.
+- The queue is polled continuously for messages using [long polling](http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-long-polling.html).
+- Messages are deleted from the queue once the handler function has completed successfully.
+- Throwing an error (or returning a rejected promise) from the handler function will cause the message to be left on the queue. An [SQS redrive policy](http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/SQSDeadLetterQueue.html) can be used to move messages that cannot be processed to a dead letter queue.
+- By default messages are processed one at a time – a new message won't be received until the first one has been processed. To process messages in parallel, use the `batchSize` option [detailed below](#options).
+- By default, the default Node.js HTTP/HTTPS SQS agent creates a new TCP connection for every new request ([AWS SQS documentation](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/node-reusing-connections.html)). To avoid the cost of establishing a new connection, you can reuse an existing connection by passing a new SQS instance with `keepAlive: true`.
+
 ```js
 const { Consumer, AwsQueueProvider } = require('sqs-consumer');
 const AWS = require('aws-sdk');
 const sqs = new AWS.SQS({
-    httpOptions: {
-      agent: new https.Agent({
-        keepAlive: true
-      })
-    }
-  });
+  httpOptions: {
+    agent: new https.Agent({
+      keepAlive: true
+    })
+  }
+});
 
 const provider = new AwsQueueProvider('https://sqs.eu-west-1.amazonaws.com/account-id/queue-name', { sqs });
 const app = Consumer.create(provider, {
@@ -80,7 +81,6 @@ export AWS_ACCESS_KEY_ID=...
 
 If you need to specify your credentials manually, you can use a pre-configured instance of the [AWS SQS](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/SQS.html) client:
 
-
 ```js
 const { Consumer } = require('sqs-consumer');
 const AWS = require('aws-sdk');
@@ -91,7 +91,9 @@ AWS.config.update({
   secretAccessKey: '...'
 });
 
-const provider = new AwsQueueProvider('https://sqs.eu-west-1.amazonaws.com/account-id/queue-name', { sqs: new AWS.SQS() });
+const provider = new AwsQueueProvider('https://sqs.eu-west-1.amazonaws.com/account-id/queue-name', {
+  sqs: new AWS.SQS()
+});
 const app = Consumer.create(provider, {
   handleMessage: async (message) => {
     // ...
@@ -107,7 +109,7 @@ app.on('processing_error', (err) => {
 });
 
 app.on('timeout_error', (err) => {
- console.error(err.message);
+  console.error(err.message);
 });
 
 app.start();
@@ -115,27 +117,28 @@ app.start();
 
 ## API
 
-### `Consumer.create(options)`
+### `Consumer.create(provider, options)`
 
 Creates a new SQS consumer.
 
+#### Provider
+
+- Choose between AWS or Azure as queue provider by initialising `AwsQueueProvider` or `AzureQueueProvider`
+
 #### Options
 
-* `queueUrl` - _String_ - The SQS queue URL
-* `region` - _String_ - The AWS region (default `eu-west-1`)
-* `handleMessage` - _Function_ - An `async` function (or function that returns a `Promise`) to be called whenever a message is received. Receives an SQS message object as it's first argument.
-* `handleMessageBatch` - _Function_ - An `async` function (or function that returns a `Promise`) to be called whenever a batch of messages is received. Similar to `handleMessage` but will receive the list of messages, not each message individually. **If both are set, `handleMessageBatch` overrides `handleMessage`**.
-* `handleMessageTimeout` - _Number_ - Time in ms to wait for `handleMessage` to process a message before timing out. Emits `timeout_error` on timeout. By default, if `handleMessage` times out, the unprocessed message returns to the end of the queue.
-* `attributeNames` - _Array_ - List of queue attributes to retrieve (i.e. `['All', 'ApproximateFirstReceiveTimestamp', 'ApproximateReceiveCount']`).
-* `messageAttributeNames` - _Array_ - List of message attributes to retrieve (i.e. `['name', 'address']`).
-* `batchSize` - _Number_ - The number of messages to request from SQS when polling (default `1`). This cannot be higher than the AWS limit of 10.
-* `visibilityTimeout` - _Number_ - The duration (in seconds) that the received messages are hidden from subsequent retrieve requests after being retrieved by a ReceiveMessage request.
-* `heartbeatInterval` - _Number_ - The interval (in seconds) between requests to extend the message visibility timeout. On each heartbeat the visibility is extended by adding `visibilityTimeout` to the number of seconds since the start of the handler function. This value must less than `visibilityTimeout`.
-* `terminateVisibilityTimeout` - _Boolean_ - If true, sets the message visibility timeout to 0 after a `processing_error` (defaults to `false`).
-* `waitTimeSeconds` - _Number_ - The duration (in seconds) for which the call will wait for a message to arrive in the queue before returning.
-* `authenticationErrorTimeout` - _Number_ - The duration (in milliseconds) to wait before retrying after an authentication error (defaults to `10000`).
-* `pollingWaitTimeMs` - _Number_ - The duration (in milliseconds) to wait before repolling the queue (defaults to `0`).
-* `sqs` - _Object_ - An optional [AWS SQS](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/SQS.html) object to use if you need to configure the client manually
+- `handleMessage` - _Function_ - An `async` function (or function that returns a `Promise`) to be called whenever a message is received. Receives an SQS message object as it's first argument.
+- `handleMessageBatch` - _Function_ - An `async` function (or function that returns a `Promise`) to be called whenever a batch of messages is received. Similar to `handleMessage` but will receive the list of messages, not each message individually. **If both are set, `handleMessageBatch` overrides `handleMessage`**.
+- `handleMessageTimeout` - _Number_ - Time in ms to wait for `handleMessage` to process a message before timing out. Emits `timeout_error` on timeout. By default, if `handleMessage` times out, the unprocessed message returns to the end of the queue.
+- `batchSize` - _Number_ - The number of messages to request from SQS when polling (default `1`). This cannot be higher than the AWS limit of 10.
+- `visibilityTimeout` - _Number_ - The duration (in seconds) that the received messages are hidden from subsequent retrieve requests after being retrieved by a ReceiveMessage request.
+- `heartbeatInterval` - _Number_ - The interval (in seconds) between requests to extend the message visibility timeout. On each heartbeat the visibility is extended by adding `visibilityTimeout` to the number of seconds since the start of the handler function. This value must less than `visibilityTimeout`.
+- `terminateVisibilityTimeout` - _Boolean_ - If true, sets the message visibility timeout to 0 after a `processing_error` (defaults to `false`).
+- `waitTimeSeconds` - _Number_ - The duration (in seconds) for which the call will wait for a message to arrive in the queue before returning.
+- `authenticationErrorTimeout` - _Number_ - The duration (in milliseconds) to wait before retrying after an authentication error (defaults to `10000`).
+- `pollingWaitTimeMs` - _Number_ - The duration (in milliseconds) to wait before repolling the queue (defaults to `0`).
+- `sqs` - _Object_ - An optional [AWS SQS](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/SQS.html) object to use if you need to configure the client manually
+- `receiveOptions` - _Object_ - Extra parameters to be passed in ReceiveMessage. For more information check [SQS](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ReceiveMessage.html) or [StorageQueue](https://docs.microsoft.com/en-us/azure/storage/queues/storage-nodejs-how-to-use-queues?tabs=javascript#additional-options-for-dequeuing-messages) documentation.
 
 ### `consumer.start()`
 
@@ -145,7 +148,7 @@ Start polling the queue for messages.
 
 Stop polling the queue for messages.
 
-### `consumer.isRunning`  
+### `consumer.isRunning`
 
 Returns the current polling state of the consumer: `true` if it is actively polling, `false` if it is not.
 
@@ -153,21 +156,21 @@ Returns the current polling state of the consumer: `true` if it is actively poll
 
 Each consumer is an [`EventEmitter`](http://nodejs.org/api/events.html) and emits the following events:
 
-|Event|Params|Description|
-|-----|------|-----------|
-|`error`|`err`, `[message]`|Fired when an error occurs interacting with the queue. If the error correlates to a message, that error is included in Params|
-|`processing_error`|`err`, `message`|Fired when an error occurs processing the message.|
-|`timeout_error`|`err`, `message`|Fired when `handleMessageTimeout` is supplied as an option and if `handleMessage` times out.|
-|`message_received`|`message`|Fired when a message is received.|
-|`message_processed`|`message`|Fired when a message is successfully processed and removed from the queue.|
-|`response_processed`|None|Fired after one batch of items (up to `batchSize`) has been successfully processed.|
-|`stopped`|None|Fired when the consumer finally stops its work.|
-|`empty`|None|Fired when the queue is empty (All messages have been consumed).|
+| Event                | Params             | Description                                                                                                                   |
+| -------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `error`              | `err`, `[message]` | Fired when an error occurs interacting with the queue. If the error correlates to a message, that error is included in Params |
+| `processing_error`   | `err`, `message`   | Fired when an error occurs processing the message.                                                                            |
+| `timeout_error`      | `err`, `message`   | Fired when `handleMessageTimeout` is supplied as an option and if `handleMessage` times out.                                  |
+| `message_received`   | `message`          | Fired when a message is received.                                                                                             |
+| `message_processed`  | `message`          | Fired when a message is successfully processed and removed from the queue.                                                    |
+| `response_processed` | None               | Fired after one batch of items (up to `batchSize`) has been successfully processed.                                           |
+| `stopped`            | None               | Fired when the consumer finally stops its work.                                                                               |
+| `empty`              | None               | Fired when the queue is empty (All messages have been consumed).                                                              |
 
 ### AWS IAM Permissions
 
 Consumer will receive and delete messages from the SQS queue. Ensure `sqs:ReceiveMessage` and `sqs:DeleteMessage` access is granted on the queue being consumed.
 
+### Contributing
 
-### Contributing 
 See contributing [guidelines](https://github.com/bbc/sqs-consumer/blob/master/.github/CONTRIBUTING.md).

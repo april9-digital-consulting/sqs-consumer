@@ -1,3 +1,12 @@
+export const defaultMessageFields = [
+  'MessageId',
+  'Body',
+  'ReceiptHandle',
+  'popReceipt',
+  'messageText',
+  'messageId'
+];
+
 export interface MessageIdentification {
   messageId: string;
   receiptHandle: string;
@@ -5,6 +14,7 @@ export interface MessageIdentification {
 
 export interface Message extends MessageIdentification {
   body?: string;
+  extraFields?: unknown;
 }
 
 export type MessageList = Message[];
@@ -17,6 +27,7 @@ export interface ReceiveMessageOptions {
   visibilityTimeout?: number;
   waitTimeout: number;
   maxNumberOfMessages: number;
+  extraOptions?: Record<string, unknown>;
 }
 
 export interface IQueueProvider {

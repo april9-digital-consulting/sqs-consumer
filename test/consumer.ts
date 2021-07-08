@@ -252,17 +252,20 @@ describe('Consumer', () => {
         {
           receiptHandle: 'receipt-handle-1',
           messageId: '1',
-          body: 'body-1'
+          body: 'body-1',
+          extraFields: undefined
         },
         {
           receiptHandle: 'receipt-handle-2',
           messageId: '2',
-          body: 'body-2'
+          body: 'body-2',
+          extraFields: undefined
         },
         {
           receiptHandle: 'receipt-handle-3',
           messageId: '3',
-          body: 'body-3'
+          body: 'body-3',
+          extraFields: undefined
         }
       ];
 
@@ -271,7 +274,7 @@ describe('Consumer', () => {
       });
 
       consumer = new Consumer(sqs, {
-        // messageAttributeNames: ['attribute-1', 'attribute-2'],
+        receiveOptions: { MessageAttributeNames: ['attribute-1', 'attribute-2'] },
         handleMessage,
         batchSize: 3
       });
@@ -281,11 +284,10 @@ describe('Consumer', () => {
       return new Promise((resolve) => {
         handleMessage.onThirdCall().callsFake(() => {
           const options: ReceiveMessageOptions = {
-            // AttributeNames: [],
-            // MessageAttributeNames: ['attribute-1', 'attribute-2'],
             maxNumberOfMessages: 3,
             waitTimeout: 20,
-            visibilityTimeout: undefined
+            visibilityTimeout: undefined,
+            extraOptions: { MessageAttributeNames: ['attribute-1', 'attribute-2'] }
           };
 
           sandbox.assert.calledWith(sqs.receiveMessage, options);
@@ -363,7 +365,7 @@ describe('Consumer', () => {
       handleMessage.resolves(null);
 
       consumer = new Consumer(sqs, {
-        messageAttributeNames: ['attribute-1', 'attribute-2'],
+        receiveOptions: { messageAttributeNames: ['attribute-1', 'attribute-2'] },
         handleMessage,
         batchSize: 2
       });
@@ -377,7 +379,7 @@ describe('Consumer', () => {
 
     it('calls the handleMessagesBatch function when a batch of messages is received', async () => {
       consumer = new Consumer(sqs, {
-        messageAttributeNames: ['attribute-1', 'attribute-2'],
+        receiveOptions: { messageAttributeNames: ['attribute-1', 'attribute-2'] },
         handleMessageBatch,
         batchSize: 2
       });
@@ -391,7 +393,7 @@ describe('Consumer', () => {
 
     it('prefers handleMessagesBatch over handleMessage when both are set', async () => {
       consumer = new Consumer(sqs, {
-        messageAttributeNames: ['attribute-1', 'attribute-2'],
+        receiveOptions: { messageAttributeNames: ['attribute-1', 'attribute-2'] },
         handleMessageBatch,
         handleMessage,
         batchSize: 2
@@ -449,42 +451,6 @@ describe('Consumer', () => {
       sandbox.assert.calledWith(sqs.changeMessageVisibilityBatch, messages, 100);
       sandbox.assert.calledOnce(clearIntervalSpy);
     });
-
-    // it("consumes messages with message attribute 'ApproximateReceiveCount'", async () => {
-    //   const messageWithAttr: Message = {
-    //     receiptHandle: 'receipt-handle-1',
-    //     messageId: '1',
-    //     body: 'body-1'
-    //     // Attributes: {
-    //     //   ApproximateReceiveCount: 1
-    //     // }
-    //   };
-
-    //   sqs.receiveMessage = stubResolve({
-    //     Messages: [messageWithAttr]
-    //   });
-
-    //   consumer = new Consumer(sqs, {
-    //     attributeNames: ['ApproximateReceiveCount'],
-    //     handleMessage
-    //   });
-
-    //   consumer.start();
-    //   const message = await pEvent(consumer, 'message_received');
-    //   consumer.stop();
-
-    //   const options: ReceiveMessageOptions = {
-    //     // AttributeNames: ['ApproximateReceiveCount'],
-    //     // MessageAttributeNames: [],
-    //     maxNumberOfMessages: 1,
-    //     waitTimeout: 20,
-    //     visibilityTimeout: undefined
-    //   };
-
-    //   sandbox.assert.calledWith(sqs.receiveMessage, options);
-
-    //   assert.equal(message, messageWithAttr);
-    // });
   });
 
   describe('.stop', () => {

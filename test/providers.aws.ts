@@ -1,3 +1,4 @@
+import { SQS } from 'aws-sdk';
 import { assert } from 'chai';
 import * as pEvent from 'p-event';
 
@@ -195,6 +196,53 @@ describe('Aws', () => {
 
       sandbox.assert.calledTwice(errorListener);
       sandbox.assert.calledTwice(awsQueueProvider['sqs'].receiveMessage);
+    });
+
+    it("consumes messages with message attribute 'ApproximateReceiveCount'", async () => {
+      const messageWithAttr: any = {
+        ReceiptHandle: 'receipt-handle-1',
+        MessageId: '1',
+        Body: 'body-1',
+        Attributes: {
+          ApproximateReceiveCount: 1
+        }
+      };
+
+      awsQueueProvider['sqs'].receiveMessage = stubResolve({
+        Messages: [messageWithAttr]
+      });
+
+      consumer = new Consumer(awsQueueProvider, {
+        receiveOptions: { AttributeNames: ['ApproximateReceiveCount'] },
+        handleMessage
+      });
+
+      consumer.start();
+      const message = await pEvent(consumer, 'message_received');
+      consumer.stop();
+
+      const options: SQS.ReceiveMessageRequest = {
+        MaxNumberOfMessages: 1,
+        WaitTimeSeconds: 20,
+        QueueUrl: 'some-queue-url',
+        VisibilityTimeout: undefined,
+        AttributeNames: ['ApproximateReceiveCount']
+      };
+
+      sandbox.assert.calledWith(awsQueueProvider['sqs'].receiveMessage, options);
+
+      const expectedReponse = {
+        messageId: '1',
+        body: 'body-1',
+        receiptHandle: 'receipt-handle-1',
+        extraFields: {
+          Attributes: {
+            ApproximateReceiveCount: 1
+          }
+        }
+      };
+
+      assert.deepEqual(message, expectedReponse);
     });
   });
 });
