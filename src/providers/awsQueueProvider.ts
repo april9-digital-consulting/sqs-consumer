@@ -44,14 +44,15 @@ export class AwsQueueProvider implements IQueueProvider {
         .promise();
 
       return {
-        messages: response.Messages.map((item) => ({
-          messageId: item.MessageId,
-          body: item.Body,
-          receiptHandle: item.ReceiptHandle,
-          extraFields: Object.keys(item)
-            .filter((key) => !defaultMessageFields.includes(key))
-            .reduce((current, key) => ({ ...current, [key]: item[key] }), {})
-        }))
+        messages:
+          response.Messages?.map((item) => ({
+            messageId: item.MessageId,
+            body: item.Body,
+            receiptHandle: item.ReceiptHandle,
+            extraFields: Object.keys(item)
+              .filter((key) => !defaultMessageFields.includes(key))
+              .reduce((current, key) => ({ ...current, [key]: item[key] }), {})
+          })) || []
       };
     } catch (err) {
       throw this.toSQSError(err, `SQS receive message failed: ${err.message}`);

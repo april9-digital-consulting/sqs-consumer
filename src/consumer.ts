@@ -97,8 +97,6 @@ export class Consumer extends EventEmitter {
   private handleMessage: (message: Message) => Promise<void>;
   private handleMessageBatch: (message: Message[]) => Promise<void>;
   private handleMessageTimeout: number;
-  // private attributeNames: string[];
-  // private messageAttributeNames: string[];
   private extraReceiveOptions: Record<string, unknown>;
   private stopped: boolean;
   private batchSize: number;
@@ -118,8 +116,6 @@ export class Consumer extends EventEmitter {
     this.handleMessageBatch = options.handleMessageBatch;
     this.handleMessageTimeout = options.handleMessageTimeout;
     this.extraReceiveOptions = options.receiveOptions;
-    // this.attributeNames = options.attributeNames || [];
-    // this.messageAttributeNames = options.messageAttributeNames || [];
     this.stopped = true;
     this.batchSize = options.batchSize || 1;
     this.visibilityTimeout = options.visibilityTimeout;
