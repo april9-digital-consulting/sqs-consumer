@@ -51,7 +51,13 @@ function assertOptions(options: ConsumerOptions): void {
 
 function isConnectionError(err: Error): boolean {
   if (err instanceof SQSError) {
-    return err.statusCode === 403 || err.code === 'CredentialsError' || err.code === 'UnknownEndpoint';
+    return (
+      err.statusCode === 403 ||
+      err.code === 'CredentialsError' ||
+      err.code === 'UnknownEndpoint' ||
+      err.code === 'QueueNotFound' ||
+      err.code === 'AuthorizationFailure'
+    );
   }
   return false;
 }

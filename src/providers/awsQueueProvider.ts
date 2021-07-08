@@ -118,14 +118,6 @@ export class AwsQueueProvider implements IQueueProvider {
   }
 
   private toSQSError(err: AWSError, message: string): SQSError {
-    const sqsError = new SQSError(message);
-    sqsError.code = err.code;
-    sqsError.statusCode = err.statusCode;
-    sqsError.region = err.region;
-    sqsError.retryable = err.retryable;
-    sqsError.hostname = err.hostname;
-    sqsError.time = err.time;
-
-    return sqsError;
+    return new SQSError(message, err);
   }
 }

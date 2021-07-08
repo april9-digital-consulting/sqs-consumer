@@ -61,7 +61,7 @@ describe('Aws', () => {
 
     consumer = new Consumer(awsQueueProvider, {
       handleMessage,
-      authenticationErrorTimeout: 20
+      authenticationErrorTimeout: AUTHENTICATION_ERROR_TIMEOUT
     });
   });
 
@@ -108,11 +108,12 @@ describe('Aws', () => {
       assert.ok(err);
       assert.equal(err.message, 'SQS receive message failed: Receive error');
       assert.equal(err.code, receiveErr.code);
-      assert.equal(err.retryable, receiveErr.retryable);
       assert.equal(err.statusCode, receiveErr.statusCode);
-      assert.equal(err.time, receiveErr.time);
-      assert.equal(err.hostname, receiveErr.hostname);
-      assert.equal(err.region, receiveErr.region);
+
+      assert.equal(err.details.retryable, receiveErr.retryable);
+      assert.equal(err.details.time, receiveErr.time);
+      assert.equal(err.details.hostname, receiveErr.hostname);
+      assert.equal(err.details.region, receiveErr.region);
     });
 
     it('fires an error event when an error occurs deleting a message', async () => {

@@ -1,6 +1,6 @@
 import * as Debug from 'debug';
 import { SQSError } from '../errors';
-import { QueueClient, QueueServiceClient } from '@azure/storage-queue';
+import { QueueClient, QueueServiceClient, RestError } from '@azure/storage-queue';
 import {
   IQueueProvider,
   ReceiveMessageOptions,
@@ -96,16 +96,7 @@ export class AzureQueueProvider implements IQueueProvider {
     }
   }
 
-  private toSQSError(err: any, message: string): SQSError {
-    const sqsError = new SQSError(message);
-    // handle azure exception.
-    // sqsError.code = err.code;
-    // sqsError.statusCode = err.statusCode;
-    // sqsError.region = err.region;
-    // sqsError.retryable = err.retryable;
-    // sqsError.hostname = err.hostname;
-    // sqsError.time = err.time;
-
-    return sqsError;
+  private toSQSError(err: RestError, message: string): SQSError {
+    return new SQSError(message, err);
   }
 }
