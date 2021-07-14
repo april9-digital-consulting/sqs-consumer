@@ -1,6 +1,6 @@
 import * as Debug from 'debug';
 import { SQSError } from '../errors';
-import { QueueClient, QueueServiceClient, RestError } from '@azure/storage-queue';
+import { QueueClient, QueueReceiveMessageOptions, QueueServiceClient, RestError } from '@azure/storage-queue';
 import {
   IQueueProvider,
   ReceiveMessageOptions,
@@ -15,7 +15,6 @@ type AzureQueueOptions = { queueServiceClient?: QueueServiceClient; connectionSt
 
 export class AzureQueueProvider implements IQueueProvider {
   private sqs: QueueClient;
-  private queueUrl: string;
 
   constructor(queueUrl: string, options: AzureQueueOptions) {
     if (!queueUrl) {
@@ -33,19 +32,18 @@ export class AzureQueueProvider implements IQueueProvider {
     const client =
       options?.queueServiceClient || QueueServiceClient.fromConnectionString(options.connectionString);
 
-    this.queueUrl = queueUrl;
     this.sqs = client.getQueueClient(queueUrl);
   }
 
   public async receiveMessage(options?: ReceiveMessageOptions): Promise<ReceiveMessageResult> {
     try {
-      const response = await this.sqs.receiveMessages({
-        QueueUrl: this.queueUrl,
-        MaxNumberOfMessages: options?.maxNumberOfMessages,
-        WaitTimeSeconds: options?.waitTimeout,
-        VisibilityTimeout: options?.visibilityTimeout,
+      const params: QueueReceiveMessageOptions = {
+        visibilityTimeout: options.visibilityTimeout,
+        numberOfMessages: options.maxNumberOfMessages,
         ...options?.extraOptions
-      });
+      };
+
+      const response = await this.sqs.receiveMessages(params);
 
       return {
         messages: response.receivedMessageItems.map((item) => ({

@@ -37,7 +37,6 @@ export class AwsQueueProvider implements IQueueProvider {
         .receiveMessage({
           QueueUrl: this.queueUrl,
           MaxNumberOfMessages: options?.maxNumberOfMessages,
-          WaitTimeSeconds: options?.waitTimeout,
           VisibilityTimeout: options?.visibilityTimeout,
           ...options?.extraOptions
         })

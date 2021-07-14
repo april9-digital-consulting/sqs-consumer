@@ -223,7 +223,6 @@ describe('Aws', () => {
 
       const options: SQS.ReceiveMessageRequest = {
         MaxNumberOfMessages: 1,
-        WaitTimeSeconds: 20,
         QueueUrl: 'some-queue-url',
         VisibilityTimeout: undefined,
         AttributeNames: ['ApproximateReceiveCount']

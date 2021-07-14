@@ -70,7 +70,6 @@ export interface ConsumerOptions {
   stopped?: boolean;
   batchSize?: number;
   visibilityTimeout?: number;
-  waitTimeSeconds?: number;
   authenticationErrorTimeout?: number;
   pollingWaitTimeMs?: number;
   terminateVisibilityTimeout?: boolean;
@@ -101,7 +100,6 @@ export class Consumer extends EventEmitter {
   private stopped: boolean;
   private batchSize: number;
   private visibilityTimeout: number;
-  private waitTimeSeconds: number;
   private authenticationErrorTimeout: number;
   private pollingWaitTimeMs: number;
   private terminateVisibilityTimeout: boolean;
@@ -121,9 +119,8 @@ export class Consumer extends EventEmitter {
     this.visibilityTimeout = options.visibilityTimeout;
     this.terminateVisibilityTimeout = options.terminateVisibilityTimeout || false;
     this.heartbeatInterval = options.heartbeatInterval;
-    this.waitTimeSeconds = options.waitTimeSeconds || 20;
     this.authenticationErrorTimeout = options.authenticationErrorTimeout || 10000;
-    this.pollingWaitTimeMs = options.pollingWaitTimeMs || 0;
+    this.pollingWaitTimeMs = options.pollingWaitTimeMs || 10000;
 
     autoBind(this);
   }
@@ -253,7 +250,6 @@ export class Consumer extends EventEmitter {
     debug('Polling for messages');
     const receiveOptions: ReceiveMessageOptions = {
       maxNumberOfMessages: this.batchSize,
-      waitTimeout: this.waitTimeSeconds,
       visibilityTimeout: this.visibilityTimeout,
       extraOptions: this.extraReceiveOptions
     };

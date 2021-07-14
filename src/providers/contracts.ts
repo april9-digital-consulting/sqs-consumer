@@ -25,7 +25,6 @@ export interface ReceiveMessageResult {
 
 export interface ReceiveMessageOptions {
   visibilityTimeout?: number;
-  waitTimeout: number;
   maxNumberOfMessages: number;
   extraOptions?: Record<string, unknown>;
 }

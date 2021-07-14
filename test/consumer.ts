@@ -105,7 +105,6 @@ describe('Consumer', () => {
       const instance = Consumer.create(sqs, {
         batchSize: 1,
         visibilityTimeout: 10,
-        waitTimeSeconds: 10,
         handleMessage
       });
 
@@ -285,7 +284,6 @@ describe('Consumer', () => {
         handleMessage.onThirdCall().callsFake(() => {
           const options: ReceiveMessageOptions = {
             maxNumberOfMessages: 3,
-            waitTimeout: 20,
             visibilityTimeout: undefined,
             extraOptions: { MessageAttributeNames: ['attribute-1', 'attribute-2'] }
           };
