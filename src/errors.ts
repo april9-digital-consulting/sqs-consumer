@@ -1,14 +1,17 @@
+import { RestError } from '@azure/storage-queue';
+import { AWSError } from 'aws-sdk';
+
 class SQSError extends Error {
   code: string;
   statusCode: number;
-  region: string;
-  hostname: string;
-  time: Date;
-  retryable: boolean;
+  details: unknown;
 
-  constructor(message: string) {
+  constructor(message: string, err: AWSError | RestError) {
     super(message);
     this.name = this.constructor.name;
+    this.code = err.code;
+    this.statusCode = err.statusCode;
+    this.details = err['details'] || err;
   }
 }
 
@@ -20,7 +23,4 @@ class TimeoutError extends Error {
   }
 }
 
-export {
-  SQSError,
-  TimeoutError
-};
+export { SQSError, TimeoutError };

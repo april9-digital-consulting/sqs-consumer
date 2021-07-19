@@ -27,30 +27,34 @@
   "homepage": "https://github.com/BBC/sqs-consumer",
   "keywords": [
     "sqs",
+    "storageQueue",
     "queue",
     "consumer"
   ],
   "license": "Apache-2.0",
   "devDependencies": {
+    "@azure/storage-queue": "^12.5.0",
     "@types/chai": "^4.2.11",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^7.0.2",
     "@types/node": "^14.0.13",
     "@types/sinon": "^9.0.4",
     "@types/typescript": "^2.0.0",
+    "aws-sdk": "^2.699.0",
     "chai": "^4.2.0",
     "codeclimate-test-reporter": "^0.5.1",
     "eslint": "^7.2.0",
     "eslint-config-iplayer-ts": "^2.0.0",
+    "eslint-plugin-prettier": "^3.4.0",
     "mocha": "^8.0.1",
     "nyc": "^15.1.0",
     "p-event": "^4.2.0",
+    "prettier": "^2.3.2",
     "sinon": "^9.0.2",
     "ts-node": "^8.10.2",
     "tslint-config-airbnb": "^5.11.2",
     "tslint-microsoft-contrib": "^6.2.0",
-    "typescript": "^3.9.5",
-    "aws-sdk": "^2.699.0"
+    "typescript": "^3.9.5"
   },
   "dependencies": {
     "debug": "^4.1.1"
@@ -76,6 +80,15 @@
     "parserOptions": {
       "ecmaVersion": 2017,
       "sourceType": "module"
+    },
+    "rules": {
+      "quotes": [
+        "error",
+        "single",
+        {
+          "avoidEscape": true
+        }
+      ]
     }
   },
   "mocha": {
